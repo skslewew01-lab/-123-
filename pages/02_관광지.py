@@ -1,12 +1,14 @@
 import streamlit as st
+import folium
+from streamlit_folium import st_folium
 import pandas as pd
-import plotly.express as px
 
-# 앱 제목
+# 페이지 설정
 st.set_page_config(page_title="외국인이 좋아하는 서울 관광지 TOP10", layout="wide")
-st.title("🌏 외국인이 좋아하는 서울 관광지 TOP10")
 
-# 관광지 데이터 (실제 인기 순위 기반 예시)
+st.title("🌏 외국인이 좋아하는 서울 관광지 TOP10 (Folium 지도)")
+
+# 관광지 데이터
 data = {
     "관광지": [
         "경복궁", "명동", "남산타워(N서울타워)", "홍대", "북촌한옥마을",
@@ -36,27 +38,25 @@ data = {
 
 df = pd.DataFrame(data)
 
+# 서울 중심 좌표 기준 지도 생성
+m = folium.Map(location=[37.5665, 126.9780], zoom_start=12)
+
+# 마커 추가
+for i, row in df.iterrows():
+    folium.Marker(
+        location=[row["위도"], row["경도"]],
+        popup=f"<b>{row['관광지']}</b><br>{row['설명']}",
+        tooltip=row["관광지"],
+        icon=folium.Icon(color="red", icon="info-sign")
+    ).add_to(m)
+
 # 지도 표시
-fig = px.scatter_mapbox(
-    df,
-    lat="위도",
-    lon="경도",
-    hover_name="관광지",
-    hover_data=["설명"],
-    zoom=11,
-    height=650,
-    color_discrete_sequence=["red"],
-)
-
-fig.update_layout(
-    mapbox_style="open-street-map",
-    margin={"r":0,"t":0,"l":0,"b":0},
-)
-
-st.plotly_chart(fig, use_container_width=True)
+st_data = st_folium(m, width=900, height=600)
 
 # 하단 설명
 st.markdown("---")
 st.subheader("💡 참고")
 st.write("데이터는 외국인 관광객 선호도, SNS 언급량, 서울시 관광자료를 기반으로 작성된 예시입니다.")
+
+
 
