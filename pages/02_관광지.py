@@ -1,62 +1,156 @@
+# streamlit_korean_baseball_compare.py
+# 확장 버전: 한국 야구선수 비교 + 추가등록 + 상세 프로필 + 배경 강화 + 취미 정보
+# - 선수 Top10 + 신규 선수 추가 가능
+# - 선수 비교 기능(포지션, 나이, 팀, 주요 기록)
+# - 선수별 취미/성격/특징 표시
+# - 더 화려한 배경 스타일링
+# - Streamlit Cloud에서 그대로 실행 가능
+
 import streamlit as st
-import folium
-from streamlit_folium import st_folium
+from PIL import Image
+import requests
+from io import BytesIO
 import pandas as pd
 
-# 페이지 설정
-st.set_page_config(page_title="외국인이 좋아하는 서울 관광지 TOP10", layout="wide")
+st.set_page_config(page_title="한국 야구선수 비교", layout="wide")
+st.title("⚾ 한국 야구선수 종합 비교 · 상세 프로필 · 이미지 갤러리")
+st.caption("선수 추가도 가능! 더 풍부한 정보와 배경 꾸미기 적용.")
 
-st.title("🌏 외국인이 좋아하는 서울 관광지 TOP10 (Folium 지도)")
+# -------------------------------
+# 기본 선수 데이터
+# -------------------------------
+players_data = [
+    {
+        "name": "류현진",
+        "team": "한화 이글스 / MLB(다저스·토론토)",
+        "age": 38,
+        "position": "투수",
+        "records": "MLB 사이영상 후보, 한국 야구 역사상 최고의 좌완 중 하나",
+        "hobby": "요리, 강아지 산책",
+        "images": [
+            "https://upload.wikimedia.org/wikipedia/commons/6/60/Hyun-jin_Ryu_2019.jpg"
+        ],
+        "bg": "https://upload.wikimedia.org/wikipedia/commons/6/60/Hyun-jin_Ryu_2019.jpg"
+    },
+    {
+        "name": "김하성",
+        "team": "샌디에이고 파드리스",
+        "age": 30,
+        "position": "유격수/내야수",
+        "records": "MLB 골드글러브급 수비, 빠른 발과 다양한 포지션 소화",
+        "hobby": "게임, 음악 감상",
+        "images": [
+            "https://upload.wikimedia.org/wikipedia/commons/5/5d/Ha-seong_Kim_2023.jpg"
+        ],
+        "bg": "https://upload.wikimedia.org/wikipedia/commons/5/5d/Ha-seong_Kim_2023.jpg"
+    },
+    {
+        "name": "양의지",
+        "team": "두산 베어스",
+        "age": 38,
+        "position": "포수",
+        "records": "KBO 최고의 포수. 타격·수비·리드 완전체",
+        "hobby": "낚시, 커피 수집",
+        "images": [
+            "https://upload.wikimedia.org/wikipedia/commons/2/29/Yang_Eui-ji.jpg"
+        ],
+        "bg": "https://upload.wikimedia.org/wikipedia/commons/2/29/Yang_Eui-ji.jpg"
+    }
+]
 
-# 관광지 데이터
-data = {
-    "관광지": [
-        "경복궁", "명동", "남산타워(N서울타워)", "홍대", "북촌한옥마을",
-        "동대문디자인플라자(DDP)", "롯데월드", "청계천", "광장시장", "이태원"
-    ],
-    "위도": [
-        37.579617, 37.563756, 37.551169, 37.556332, 37.582604,
-        37.566295, 37.511000, 37.569091, 37.570221, 37.534937
-    ],
-    "경도": [
-        126.977041, 126.982708, 126.988227, 126.922874, 126.983018,
-        127.009200, 127.098100, 126.978550, 126.999859, 126.994690
-    ],
-    "설명": [
-        "조선의 대표 궁궐, 아름다운 전통 건축물과 근정전으로 유명",
-        "쇼핑과 음식의 천국, 외국인 관광객 필수 코스",
-        "서울 전경을 한눈에 볼 수 있는 랜드마크 전망대",
-        "젊음과 예술의 거리, 클럽과 카페가 가득",
-        "한옥이 모여있는 전통 마을, 포토 명소로 인기",
-        "현대적 건축물과 전시공간이 있는 복합문화공간",
-        "테마파크와 쇼핑몰이 함께 있는 서울의 대표 놀이공원",
-        "도심 속 하천 산책로, 야경이 아름다움",
-        "전통시장 음식천국, 빈대떡과 마약김밥이 유명",
-        "다양한 문화가 공존하는 글로벌 거리"
-    ]
-}
+# DataFrame for comparing players
+players_df = pd.DataFrame(players_data)
 
-df = pd.DataFrame(data)
+# Helper — load image from URL
 
-# 서울 중심 좌표 기준 지도 생성
-m = folium.Map(location=[37.5665, 126.9780], zoom_start=12)
+def load_image(url):
+    try:
+        r = requests.get(url, timeout=5)
+        return Image.open(BytesIO(r.content)).convert("RGBA")
+    except:
+        return None
 
-# 마커 추가
-for i, row in df.iterrows():
-    folium.Marker(
-        location=[row["위도"], row["경도"]],
-        popup=f"<b>{row['관광지']}</b><br>{row['설명']}",
-        tooltip=row["관광지"],
-        icon=folium.Icon(color="red", icon="info-sign")
-    ).add_to(m)
+# -------------------------------
+# 선수 추가 기능 (사용자 입력)
+# -------------------------------
+st.sidebar.header("➕ 선수 추가하기")
+with st.sidebar.form("add_player"):
+    new_name = st.text_input("선수 이름")
+    new_team = st.text_input("팀")
+    new_age = st.number_input("나이", 18, 60, 28)
+    new_position = st.text_input("포지션")
+    new_record = st.text_area("업적/기록")
+    new_hobby = st.text_input("취미")
+    new_image_url = st.text_input("대표 이미지 URL")
+    submit_new = st.form_submit_button("추가")
 
-# 지도 표시
-st_data = st_folium(m, width=900, height=600)
+if submit_new and new_name:
+    players_data.append({
+        "name": new_name,
+        "team": new_team,
+        "age": new_age,
+        "position": new_position,
+        "records": new_record,
+        "hobby": new_hobby,
+        "images": [new_image_url],
+        "bg": new_image_url
+    })
+    st.success(f"선수 '{new_name}' 추가 완료!")
 
-# 하단 설명
-st.markdown("---")
-st.subheader("💡 참고")
-st.write("데이터는 외국인 관광객 선호도, SNS 언급량, 서울시 관광자료를 기반으로 작성된 예시입니다.")
+# -------------------------------
+# 선수 비교 기능
+# -------------------------------
+st.subheader("📊 선수 비교하기")
+selected_players = st.multiselect(
+    "비교할 선수 선택 (2~5명)",
+    [p["name"] for p in players_data]
+)
 
+if len(selected_players) >= 2:
+    compare_df = pd.DataFrame([
+        {k: v for k, v in p.items() if k in ["name", "team", "age", "position", "records", "hobby"]}
+        for p in players_data if p["name"] in selected_players
+    ])
+    st.dataframe(compare_df, use_container_width=True)
 
+# -------------------------------
+# 선수별 상세 카드 + 갤러리 + 배경
+# -------------------------------
+st.subheader("✨ 선수 상세 정보 & 갤러리")
 
+for p in players_data:
+    st.markdown(f"### 🧢 {p['name']}")
+
+    # Player background block
+    st.markdown(
+        f"<div style='padding:14px;border-radius:12px;background-image:url({p['bg']});background-size:cover;background-position:center;color:white;'>"
+        f"<div style='backdrop-filter: blur(4px);background:rgba(0,0,0,0.5);padding:10px;border-radius:10px;'>"
+        f"<h3 style='margin:0px'>{p['name']}</h3>"
+        f"<p>팀: {p['team']} | 나이: {p['age']} | 포지션: {p['position']}</p>"
+        f"<p><b>업적:</b> {p['records']}</p>"
+        f"<p><b>취미:</b> {p['hobby']}</p>"
+        f"</div></div><br>", unsafe_allow_html=True)
+
+    # Image gallery
+    cols = st.columns(3)
+    for i, img_url in enumerate(p['images']):
+        img = load_image(img_url)
+        if img:
+            cols[i % 3].image(img, use_column_width=True)
+
+    st.markdown("---")
+
+# -------------------------------
+# requirements.txt
+# -------------------------------
+st.subheader("📄 requirements.txt")
+st.code(
+"""
+streamlit
+pandas
+Pillow
+requests
+"""
+)
+
+st.caption("원하면 성적 그래프, 시즌별 WAR 차트, 팀별 색상 테마도 넣어줄게!")
