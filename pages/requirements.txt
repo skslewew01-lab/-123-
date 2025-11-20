@@ -1,3 +1,9 @@
 streamlit
 pandas
 plotly
+streamlit
+matplotlib
+pandas
+numpy
+Pillow
+plotly
