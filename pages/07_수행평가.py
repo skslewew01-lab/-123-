@@ -1,215 +1,227 @@
-# streamlit_korean_baseball_top10.py
-# Streamlit app: "한국 야구선수 Top10"
-# - Displays Top 10 Korean baseball players with career, team, styled background per player
-# - Lots of images (image URLs) shown in galleries
-# - Copy this file to Streamlit Cloud (or run `streamlit run streamlit_korean_baseball_top10.py` locally)
+# streamlit_korean_baseball_full.py
+# 한국 야구선수 비교 · 추가 · 상세 프로필 · 화려한 배경 · 이미지 업로드 지원
+# 실행: streamlit run streamlit_korean_baseball_full.py
 
 import streamlit as st
-from PIL import Image
+from PIL import Image, ImageOps
 import requests
 from io import BytesIO
+import pandas as pd
+import base64
 
-st.set_page_config(page_title="한국 야구선수 Top10", layout="wide")
+st.set_page_config(page_title="한국 야구선수 비교·프로필", layout="wide")
 
-st.title("⚾ 한국 야구선수 Top 10 — 커리어 & 팀 소개")
-st.caption("주관적 순위입니다. 선수별 이미지와 배경을 풍성하게 꾸몄어요.")
+# -------------------------
+# 유틸리티 함수
+# -------------------------
 
-# Top10 선수 데이터 (간단 소개 + 이미지 URL 리스트)
-players = [
-    {
-        "rank": 1,
-        "name": "류현진 (Ryu Hyun-jin)",
-        "position": "투수",
-        "team": "프리/역대: 토론토, LA다저스 등",
-        "career": "KBO와 MLB에서 모두 성공을 거둔 대한민국 대표 좌완 에이스. 2019-2020년대 MLB에서 뛰어난 성적을 기록.",
-        "images": [
-            "https://upload.wikimedia.org/wikipedia/commons/6/60/Hyun-jin_Ryu_2019.jpg",
-            "https://pbs.twimg.com/media/ExampleRyu1.jpg",
-            "https://images.espncdn.com/i/headshots/mlb/players/full/32582.png"
-        ],
-        "bg": "https://images.espncdn.com/i/headshots/mlb/players/full/32582.png"
-    },
-    {
-        "rank": 2,
-        "name": "김하성 (Kim Ha-seong)",
-        "position": "유격수/내야수",
-        "team": "MLB: 최근 소속팀(변동 가능)",
-        "career": "수비력과 기동력을 갖춘 대표적인 한국인 내야수. MLB에서 골드글러브와 주목받는 활약을 보여줌.",
-        "images": [
-            "https://upload.wikimedia.org/wikipedia/commons/5/5d/Ha-seong_Kim_2023.jpg",
-            "https://images.espncdn.com/i/headshots/mlb/players/full/4089862.png",
-            "https://example.com/kim_gallery1.jpg"
-        ],
-        "bg": "https://images.espncdn.com/i/headshots/mlb/players/full/4089862.png"
-    },
-    {
-        "rank": 3,
-        "name": "추신수 (Choo Shin-soo)",
-        "position": "외야수",
-        "team": "은퇴/역대: MLB(텍사스, 신시내티 등)",
-        "career": "긴 MLB 경력과 꾸준한 출루 능력으로 한국 최초 세대의 글로벌 스타 중 한 명.",
-        "images": [
-            "https://upload.wikimedia.org/wikipedia/commons/1/12/Choo_Shin-soo_2013.jpg",
-            "https://example.com/choo2.jpg"
-        ],
-        "bg": "https://upload.wikimedia.org/wikipedia/commons/1/12/Choo_Shin-soo_2013.jpg"
-    },
-    {
-        "rank": 4,
-        "name": "이승엽 (Lee Seung-yeop)",
-        "position": "지명타자/1루수",
-        "team": "은퇴/역대: KBO·NPB 전설",
-        "career": "KBO 역사상 최고의 슬러거 중 한 명. 홈런 기록과 장타력으로 전설적 입지 확보.",
-        "images": [
-            "https://upload.wikimedia.org/wikipedia/commons/8/87/Lee_Seung-yeop.jpg"
-        ],
-        "bg": "https://upload.wikimedia.org/wikipedia/commons/8/87/Lee_Seung-yeop.jpg"
-    },
-    {
-        "rank": 5,
-        "name": "양의지 (Yang Eui-ji)",
-        "position": "포수",
-        "team": "두산 베어스(경력 변동 가능)",
-        "career": "국내 최고의 포수 중 하나로 안정된 수비와 클러치 능력 보유. 여러 차례 골든글러브 수상.",
-        "images": [
-            "https://upload.wikimedia.org/wikipedia/commons/2/29/Yang_Eui-ji.jpg"
-        ],
-        "bg": "https://upload.wikimedia.org/wikipedia/commons/2/29/Yang_Eui-ji.jpg"
-    },
-    {
-        "rank": 6,
-        "name": "안현민 (Ahn Hyun-min)",
-        "position": "외야수",
-        "team": "KT 위즈",
-        "career": "2025 시즌 주목받는 타자 중 한 명으로, 강한 타격과 컨택 능력이 인상적.",
-        "images": [
-            "https://example.com/ahn1.jpg",
-            "https://example.com/ahn2.jpg"
-        ],
-        "bg": "https://example.com/ahn_bg.jpg"
-    },
-    {
-        "rank": 7,
-        "name": "김광현 (Kim Kwang-hyun)",
-        "position": "투수",
-        "team": "KBO/MLB 경력",
-        "career": "KBO와 MLB에서 모두 활약한 베테랑 좌완 투수. 꾸준한 제구와 경험이 강점.",
-        "images": [
-            "https://upload.wikimedia.org/wikipedia/commons/3/3f/Kim_Kwang-hyun.jpg"
-        ],
-        "bg": "https://upload.wikimedia.org/wikipedia/commons/3/3f/Kim_Kwang-hyun.jpg"
-    },
-    {
-        "rank": 8,
-        "name": "박병호 (Park Byung-ho)",
-        "position": "1루수/지명타자",
-        "team": "KBO/MLB 경력",
-        "career": "강한 장타력으로 유명한 슬러거. KBO에서 MVP 급 활약을 펼친 바 있음.",
-        "images": [
-            "https://upload.wikimedia.org/wikipedia/commons/6/6f/Park_Byung-ho.jpg"
-        ],
-        "bg": "https://upload.wikimedia.org/wikipedia/commons/6/6f/Park_Byung-ho.jpg"
-    },
-    {
-        "rank": 9,
-        "name": "최형우 (Choi Hyung-woo)",
-        "position": "외야수",
-        "team": "KIA 타이거즈",
-        "career": "KBO에서 오랜 시간 꾸준한 성적을 낸 베테랑 타자. 클러치 히터로 유명.",
-        "images": [
-            "https://upload.wikimedia.org/wikipedia/commons/4/4a/Choi_Hyung-woo.jpg"
-        ],
-        "bg": "https://upload.wikimedia.org/wikipedia/commons/4/4a/Choi_Hyung-woo.jpg"
-    },
-    {
-        "rank": 10,
-        "name": "배지환 (Bae Ji-hwan)",
-        "position": "내야수",
-        "team": "두산/롯데 등",
-        "career": "젊고 잠재력 있는 내야 유망주로 주목받는 선수. 향후 역량 기대.",
-        "images": [
-            "https://example.com/bae1.jpg",
-            "https://example.com/bae2.jpg"
-        ],
-        "bg": "https://example.com/bae_bg.jpg"
-    }
-]
-
-# Helper: safely load image from URL (returns PIL Image or None)
-def load_image(url):
+def load_image(url_or_file):
+    """URL 또는 업로드된 파일(UploadedFile) 모두 처리"""
     try:
-        resp = requests.get(url, timeout=5)
-        img = Image.open(BytesIO(resp.content)).convert("RGBA")
-        return img
+        if hasattr(url_or_file, "getvalue"):
+            return Image.open(BytesIO(url_or_file.getvalue())).convert("RGBA")
+        else:
+            resp = requests.get(url_or_file, timeout=5)
+            return Image.open(BytesIO(resp.content)).convert("RGBA")
     except Exception:
         return None
 
-# Layout: display top title + a gallery of player cards
-for p in players:
-    # Each player: wide expander with styled header
-    with st.container():
-        cols = st.columns([1, 2])
-        left, right = cols
-        # Left column: big rank + main image
-        with left:
-            st.markdown(f"<div style='text-align:center;padding:8px;border-radius:12px;background:#111; color:white;'>"
-                        f"<h2 style='margin:6px'>#{p['rank']} {p['name']}</h2>"
-                        f"<p style='margin:0;font-size:14px'>{p['position']} • {p['team']}</p>"
-                        f"</div>", unsafe_allow_html=True)
-            # show first available image
-            shown = False
-            for img_url in p['images']:
-                img = load_image(img_url)
-                if img is not None:
-                    st.image(img, use_column_width=True, output_format='PNG')
-                    shown = True
-                    break
-            if not shown:
-                st.write("(이미지 없음)")
 
-        # Right column: career + image gallery + styled background sample
-        with right:
-            st.markdown(f"**커리어 하이라이트**\n\n{p['career']}")
-            st.markdown("---")
-            # Small gallery of images (2 across)
-            gallery_cols = st.columns(3)
-            i = 0
-            for img_url in p['images']:
-                col = gallery_cols[i % 3]
-                img = load_image(img_url)
-                with col:
-                    if img is not None:
-                        st.image(img, width=140)
-                    else:
-                        st.write("")
-                i += 1
+def img_to_datauri(img, fmt='PNG'):
+    buffered = BytesIO()
+    img.save(buffered, format=fmt)
+    b64 = base64.b64encode(buffered.getvalue()).decode()
+    return f"data:image/{fmt.lower()};base64,{b64}"
 
-            # Player-themed background sample block (using bg image if available)
-            bg_img = p.get('bg')
-            if bg_img:
-                st.markdown(
-                    f"<div style='margin-top:8px;padding:14px;border-radius:12px;background-image:url({bg_img});background-size:cover;color:white;'>"
-                    f"<h4 style='margin:2px;padding:2px;background:rgba(0,0,0,0.5);display:inline-block;border-radius:6px;'>"
-                    f"{p['name']} — 스타일 샘플</h4>"
-                    f"<p style='margin-top:6px;background:rgba(0,0,0,0.35);padding:8px;border-radius:6px;'>팀: {p['team']} • 포지션: {p['position']}</p>"
-                    f"</div>", unsafe_allow_html=True)
 
-    st.write("\n")
+def highlight_card_html(name, subtitle, bg_datauri):
+    return f'''<div style="border-radius:16px;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,0.25);">
+        <div style="background-image:url('{bg_datauri}');background-size:cover;background-position:center;padding:18px;">
+            <div style="backdrop-filter: blur(4px);background:rgba(0,0,0,0.45);padding:12px;border-radius:10px;color:white;">
+                <h3 style="margin:0">{name}</h3>
+                <div style="font-size:13px;color:#eee">{subtitle}</div>
+            </div>
+        </div>
+    </div>'''
 
-st.sidebar.title("설정")
-st.sidebar.write("이미지 로딩에 실패할 경우 로컬 파일 또는 안정적인 URL로 교체하세요.")
+# -------------------------
+# 초기 선수 데이터 (Top10)
+# -------------------------
+initial_players = [
+    dict(name="류현진", team="한화 이글스 / MLB(다저스·토론토)", age=38, position="투수",
+         records="MLB 사이영상 후보, KBO·MLB 통산 우수 성적", hobby="요리, 강아지 산책",
+         images=["https://upload.wikimedia.org/wikipedia/commons/6/60/Hyun-jin_Ryu_2019.jpg"]),
+    dict(name="김하성", team="샌디에이고 파드리스", age=30, position="유격수/내야수",
+         records="MLB에서 다재다능한 내야수로 활약", hobby="게임, 음악 감상",
+         images=["https://upload.wikimedia.org/wikipedia/commons/5/5d/Ha-seong_Kim_2023.jpg"]),
+    dict(name="추신수", team="은퇴 / 역대: 텍사스 등(MLB)", age=43, position="외야수",
+         records="긴 MLB 경력, 높은 출루율", hobby="낚시, 골프",
+         images=["https://upload.wikimedia.org/wikipedia/commons/1/12/Choo_Shin-soo_2013.jpg"]),
+    dict(name="이승엽", team="은퇴 / KBO·NPB", age=47, position="지명타자/1루수",
+         records="KBO 대표 슬러거, 다수의 홈런 기록", hobby="가족, 골프",
+         images=["https://upload.wikimedia.org/wikipedia/commons/8/87/Lee_Seung-yeop.jpg"]),
+    dict(name="양의지", team="두산 베어스", age=38, position="포수",
+         records="KBO 최고의 포수, 다수 골든글러브", hobby="낚시, 커피 수집",
+         images=["https://upload.wikimedia.org/wikipedia/commons/2/29/Yang_Eui-ji.jpg"]),
+    dict(name="안현민", team="KT 위즈", age=27, position="외야수",
+         records="빠른 발과 컨택 능력", hobby="음악, 운동",
+         images=["https://example.com/ahn1.jpg"]),
+    dict(name="김광현", team="SSG 랜더스 / MLB 경력", age=37, position="투수",
+         records="KBO·MLB에서 활약한 베테랑 좌완", hobby="낚시, 등산",
+         images=["https://upload.wikimedia.org/wikipedia/commons/3/3f/Kim_Kwang-hyun.jpg"]),
+    dict(name="박병호", team="키움 히어로즈", age=36, position="1루수/지명타자",
+         records="강력한 장타력, KBO 홈런왕 경험", hobby="피트니스, 야구 분석",
+         images=["https://upload.wikimedia.org/wikipedia/commons/6/6f/Park_Byung-ho.jpg"]),
+    dict(name="최형우", team="KIA 타이거즈", age=41, position="외야수",
+         records="꾸준한 클러치 히터", hobby="골프, 가족",
+         images=["https://upload.wikimedia.org/wikipedia/commons/4/4a/Choi_Hyung-woo.jpg"]),
+    dict(name="배지환", team="두산 베어스", age=24, position="내야수",
+         records="젊은 유망주", hobby="게임, 드라이브",
+         images=["https://example.com/bae1.jpg"]),
+]
+
+# 상태 보관: 세션 상태에 선수 목록 유지
+if "players" not in st.session_state:
+    st.session_state.players = initial_players.copy()
+
+# -------------------------
+# 사이드바: 추가/업로드/설정
+# -------------------------
+st.sidebar.title("관리 패널")
+with st.sidebar.expander("➕ 선수 추가 / 업로드 (이미지 파일 가능)"):
+    add_name = st.text_input("이름", key="add_name")
+    add_team = st.text_input("팀", key="add_team")
+    add_age = st.number_input("나이", min_value=15, max_value=60, value=25, key="add_age")
+    add_position = st.text_input("포지션", key="add_position")
+    add_records = st.text_area("업적/설명", key="add_records")
+    add_hobby = st.text_input("취미", key="add_hobby")
+    add_image_url = st.text_input("대표 이미지 URL (선택)", key="add_img_url")
+    uploaded_files = st.file_uploader("이미지 업로드 (선택, 여러개 가능)", accept_multiple_files=True)
+    if st.button("선수 추가하기"):
+        img_urls = []
+        # 우선 업로드된 파일을 세션에 저장하고 이미지 데이터 URI로 사용
+        for f in uploaded_files:
+            st.session_state.setdefault('uploaded_images', {})
+            fid = f.name + str(len(st.session_state.uploaded_images))
+            st.session_state.uploaded_images[fid] = f.getvalue()
+            # convert to datauri
+            img = load_image(f)
+            if img:
+                img_urls.append(img_to_datauri(img))
+        if add_image_url:
+            img_urls.append(add_image_url)
+        if not img_urls:
+            img_urls = [""]
+        st.session_state.players.append(dict(name=add_name, team=add_team, age=add_age,
+                                             position=add_position, records=add_records,
+                                             hobby=add_hobby, images=img_urls))
+        st.success(f"선수 '{add_name}' 추가됨")
 
 st.sidebar.markdown("---")
-st.sidebar.markdown("**앱 사용 팁**\n- 이미지는 외부 URL에 의존합니다.\n- 배포 전 이미지 라이선스를 확인하세요.")
+if st.sidebar.button("데이터 CSV로 내보내기"):
+    flat = []
+    for p in st.session_state.players:
+        flat.append({"name": p.get('name',''), "team": p.get('team',''), "age": p.get('age',''),
+                     "position": p.get('position',''), "records": p.get('records',''), "hobby": p.get('hobby','')})
+    df = pd.DataFrame(flat)
+    csv = df.to_csv(index=False).encode('utf-8')
+    st.sidebar.download_button("CSV 다운로드", data=csv, file_name="korean_baseball_players.csv", mime="text/csv")
 
-# Footer: requirements.txt content (displayed so user can copy)
-st.markdown("---")
-st.subheader("requirements.txt (복사해서 프로젝트 루트에 저장)")
-requirements_text = '''
+# -------------------------
+# 메인: 검색, 비교, 상세 카드
+# -------------------------
+st.header("한국 야구선수 비교 · 프로필 뷰어")
+
+# 검색/필터
+col1, col2, col3 = st.columns([3, 2, 2])
+with col1:
+    q = st.text_input("선수 검색 / 필터 (이름, 팀, 포지션)")
+with col2:
+    min_age, max_age = st.slider("나이 범위", 15, 60, (15, 60))
+with col3:
+    show_images = st.checkbox("이미지 표시", value=True)
+
+# 필터링된 선수 목록
+filtered = []
+for p in st.session_state.players:
+    if q:
+        if q.lower() not in p.get('name','').lower() and q.lower() not in p.get('team','').lower() and q.lower() not in p.get('position','').lower():
+            continue
+    if not (min_age <= int(p.get('age',0)) <= max_age):
+        continue
+    filtered.append(p)
+
+st.subheader(f"검색 결과: {len(filtered)}명")
+
+# 다중 선택 비교
+names = [p['name'] for p in filtered]
+selected = st.multiselect("비교할 선수 선택 (2~5명) — 선택하지 않으면 모두 카드로 표시됩니다", options=names)
+
+if selected and len(selected) >= 2:
+    comp = [p for p in filtered if p['name'] in selected]
+    comp_flat = [{"이름": p['name'], "팀": p.get('team',''), "나이": p.get('age',''), "포지션": p.get('position',''), "업적": p.get('records',''), "취미": p.get('hobby','')} for p in comp]
+    st.table(pd.DataFrame(comp_flat))
+    st.markdown("---")
+
+# 상세 카드 그리기 (선택된 게 있으면 선택된 것만, 없으면 필터된 전부)
+render_list = [p for p in filtered if (not selected) or (p['name'] in selected)]
+
+for p in render_list:
+    col_a, col_b = st.columns([1,2])
+    with col_a:
+        # 배경 이미지 우선 로드 (첫 이미지가 datauri이면 직접 사용)
+        bg = p.get('images',[None])[0]
+        bg_img = None
+        if bg:
+            if bg.startswith('data:image'):
+                bg_datauri = bg
+            else:
+                img = load_image(bg)
+                if img:
+                    bg_datauri = img_to_datauri(ImageOps.fit(img, (800,300)))
+                else:
+                    bg_datauri = ""
+        else:
+            bg_datauri = ""
+
+        st.markdown(highlight_card_html(p['name'], f"{p.get('team','')} • {p.get('position','')} • 나이 {p.get('age','')}", bg_datauri), unsafe_allow_html=True)
+        # 주요 정보
+        st.markdown(f"**업적 / 소개**\n\n{p.get('records','정보 없음')}")
+        st.markdown(f"**취미 / 성격**\n\n{p.get('hobby','-')}")
+
+    with col_b:
+        if show_images and p.get('images'):
+            imgs = p.get('images', [])
+            cols = st.columns(3)
+            for i, u in enumerate(imgs):
+                if not u:
+                    continue
+                img = None
+                if u.startswith('data:image'):
+                    # decode
+                    header, b64 = u.split(',',1)
+                    img = Image.open(BytesIO(base64.b64decode(b64))).convert('RGBA')
+                else:
+                    img = load_image(u)
+                if img:
+                    cols[i%3].image(img, use_column_width=True, caption=f"{p['name']} 이미지 {i+1}")
+        # 버튼: 상세 프로필 다운로드 (간단 텍스트)
+        prof_text = f"이름: {p.get('name','')}\n팀: {p.get('team','')}\n나이: {p.get('age','')}\n포지션: {p.get('position','')}\n업적: {p.get('records','')}\n취미: {p.get('hobby','')}\n"
+        b = prof_text.encode('utf-8')
+        st.download_button(label="프로필 텍스트 다운로드", data=b, file_name=f"{p['name']}_profile.txt")
+
+    st.markdown("---")
+
+st.caption("원하면 팀별 색상 테마, 시즌 성적 차트, WAR 정렬, 또는 카드 애니메이션을 추가해줄게요 — 어떤 걸 먼저 넣어볼까?")
+
+# -------------------------
+# requirements
+# -------------------------
+st.sidebar.markdown("---")
+st.sidebar.subheader("필요 패키지")
+st.sidebar.code("""
 streamlit
+pandas
 Pillow
 requests
-'''
-st.code(requirements_text)
-
-st.caption("앱을 더 꾸미고 싶으면 말해줘요 — 색상, 레이아웃, 또는 특정 선수에 대한 더 상세한 데이터(연도별 성적 등)도 추가해줄게요!")
+""")
