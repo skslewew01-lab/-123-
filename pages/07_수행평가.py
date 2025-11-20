@@ -300,8 +300,11 @@ for p in filtered:
                 img = load_image(p['images'][0])
                 if img:
                     st.image(ImageOps.fit(img,(360,240)), caption=p['name'])
-            st.markdown(f"**팀:** {p.get('team','')}  \n**포지션:** {p.get('position','')}  \n**나이:** {p.get('age','')}  ")
-            st.markdown(f"**취미:** {p.get('hobby','-')}  \n**업적:** {p.get('records','-')}")
+            st.markdown(f"**팀:** {p.get('team','')}  
+**포지션:** {p.get('position','')}  
+**나이:** {p.get('age','')}  ")
+            st.markdown(f"**취미:** {p.get('hobby','-')}  
+**업적:** {p.get('records','-')}")
             prof_txt = textwrap.dedent(f"""
                 이름: {p.get('name')}
                 팀: {p.get('team')}
@@ -385,7 +388,9 @@ st.markdown('---')
 # 마무리 도움말
 # -------------------------
 st.subheader('도움말 & 다음 단계')
-st.write('- 페이지가 심심하다면 배경 SVG, 선수 애니메이션 GIF, 또는 팀 로고를 더 추가해드릴게요.\n- 시즌별 시계열 그래프(연도별 AVG/HR/WAR 등)도 연결 가능 — 원하시면 예시 CSV 양식 제공.\n- 더 원하는 스타일(카드 애니메이션, 글꼴, 테마 색상)을 말해주면 바로 반영합니다.')
+st.write('- 페이지가 심심하다면 배경 SVG, 선수 애니메이션 GIF, 또는 팀 로고를 더 추가해드릴게요.
+- 시즌별 시계열 그래프(연도별 AVG/HR/WAR 등)도 연결 가능 — 원하시면 예시 CSV 양식 제공.
+- 더 원하는 스타일(카드 애니메이션, 글꼴, 테마 색상)을 말해주면 바로 반영합니다.')
 
 st.sidebar.subheader('필요 패키지')
 st.sidebar.code('''
