@@ -1,112 +1,98 @@
-# streamlit_korean_baseball_pro_plus_fixed.py
+# streamlit_korean_baseball_short.py
 import streamlit as st
 from PIL import Image, ImageOps
 import requests
 from io import BytesIO
 import pandas as pd
-import base64
 import matplotlib.pyplot as plt
 import numpy as np
-import json
-import textwrap
 
-st.set_page_config(page_title="한국 야구 도감 PRO", layout="wide")
+st.set_page_config(page_title="한국 야구 도감", layout="wide")
 
 # -------------------------
-# radar chart helper
+# 유틸 함수
+def load_image(u):
+    try:
+        resp = requests.get(u, timeout=6)
+        return Image.open(BytesIO(resp.content))
+    except:
+        return None
+
 def radar_chart(stats_list, labels, names, title="능력치 비교"):
     N = len(labels)
     angles = np.linspace(0, 2*np.pi, N, endpoint=False).tolist()
     angles += angles[:1]
-    fig = plt.figure(figsize=(6,5))
+    fig = plt.figure(figsize=(5,4))
     ax = fig.add_subplot(111, polar=True)
     for stats, name in zip(stats_list, names):
         vals = stats + stats[:1]
-        ax.plot(angles, vals, linewidth=2, label=name)
-        ax.fill(angles, vals, alpha=0.12)
+        ax.plot(angles, vals, label=name)
+        ax.fill(angles, vals, alpha=0.1)
     ax.set_thetagrids(np.degrees(angles[:-1]), labels)
     ax.set_ylim(0,100)
     ax.set_title(title)
-    ax.legend(loc='upper right', bbox_to_anchor=(1.35, 1.05))
+    ax.legend(loc='upper right')
     return fig
 
 # -------------------------
-# normalize + estimate_stats_from_season
-def normalize(val, minv, maxv):
-    try:
-        v = float(val)
-    except:
-        return 0.0
-    return max(0.0, min(1.0, (v - minv) / (maxv - minv) if maxv>minv else 0.0))
+# 초기 데이터 (Top10)
+PLAYERS = {
+    '류현진': {'team':'한화','age':38,'position':'투수','stats':{'Contact':45,'Power':50,'Speed':40,'Defense':85,'Arm':90,'Clutch':80},
+             'images':['https://upload.wikimedia.org/wikipedia/commons/6/60/Hyun-jin_Ryu_2019.jpg']},
+    '김하성': {'team':'샌디에이고','age':30,'position':'유격수','stats':{'Contact':70,'Power':65,'Speed':80,'Defense':85,'Arm':75,'Clutch':70},
+             'images':['https://upload.wikimedia.org/wikipedia/commons/5/5d/Ha-seong_Kim_2023.jpg']},
+    # 나머지 선수 간략화
+}
 
-@st.cache_data
-def estimate_stats_from_season(row):
-    avg = row.get('avg') or row.get('AVG') or row.get('타율') or 0
-    hr = row.get('hr') or row.get('HR') or 0
-    sb = row.get('sb') or row.get('SB') or 0
-    war = row.get('war') or row.get('WAR') or 0
-    era = row.get('era') or row.get('ERA') or 999
-    n_avg = normalize(float(avg) if avg else 0, 0.18, 0.35)
-    n_hr = normalize(float(hr) if hr else 0, 0, 60)
-    n_sb = normalize(float(sb) if sb else 0, 0, 60)
-    n_war = normalize(float(war) if war else 0, -1, 10)
-    n_era = 1 - normalize(float(era) if era else 999, 0.5, 7.0)
-    contact = int(40 + n_avg * 60)
-    power = int(20 + n_hr * 80)
-    speed = int(30 + n_sb * 70)
-    defense = int(40 + n_war * 60)
-    arm = int(30 + n_war * 60)
-    clutch = int(40 + n_war * 60)
-    return {'Contact':contact,'Power':power,'Speed':speed,'Defense':defense,'Arm':arm,'Clutch':clutch}
-
-# -------------------------
-# load image helper
-def load_image(u):
-    try:
-        if hasattr(u, 'getvalue'):
-            return Image.open(BytesIO(u.getvalue())).convert('RGBA')
-        resp = requests.get(u, timeout=6)
-        return Image.open(BytesIO(resp.content)).convert('RGBA')
-    except:
-        return None
-
-def img_to_datauri(img, fmt='PNG'):
-    buffered = BytesIO()
-    img.save(buffered, format=fmt)
-    b64 = base64.b64encode(buffered.getvalue()).decode()
-    return f"data:image/{fmt.lower()};base64,{b64}"
-
-# -------------------------
-# CSS
-st.markdown("""
-<style>
-body {background: linear-gradient(135deg, #0f172a 0%, #0b1220 50%, #071029 100%); color: #e6eef8;}
-.reportview-container .main header {visibility: hidden}
-.logo-row {display:flex;align-items:center;gap:12px}
-.player-card {border-radius:14px;padding:10px;background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));box-shadow: 0 8px 24px rgba(2,6,23,0.6);}
-.big-title {font-size:28px;font-weight:700;color:#fff;margin-bottom:6px}
-.subtitle {color:#c7d2fe}
-.badge {display:inline-block;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.06);margin-right:6px;font-size:12px}
-.animate-pulse {animation: pulse 2.4s infinite}
-@keyframes pulse {0% {transform:scale(1);}50%{transform:scale(1.02);}100%{transform:scale(1);}}
-.small-muted{color:#9aa7c7;font-size:13px}
-.card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
-</style>
-""", unsafe_allow_html=True)
-
-# -------------------------
-# 초기 데이터, 세션 상태
-INITIAL_PLAYERS = {...}  # 위에 올린 Top10 그대로 사용
-DEFAULT_TEAM_THEMES = {...}  # 위 코드 그대로
 if 'players' not in st.session_state:
-    st.session_state.players = INITIAL_PLAYERS.copy()
-if 'team_themes' not in st.session_state:
-    st.session_state.team_themes = DEFAULT_TEAM_THEMES.copy()
+    st.session_state.players = PLAYERS.copy()
 
 # -------------------------
-# 메인 UI, 검색, 비교, 추가/편집, Top10 카드
-# -------------------------
-# (위에 올린 코드 그대로 이어서 쓰면 됨)
-# 핵심은 SyntaxError 방지 위해 모든 함수 정의가 먼저, 
-# 데이터/세션 초기화가 먼저, 그 다음 UI 섹션 순서
+# 상단
+st.header("🏅 Top10 한국 야구 선수")
+top10 = list(st.session_state.players.values())[:10]
+cols = st.columns(3)
+for i, p in enumerate(top10):
+    with cols[i%3]:
+        if p.get('images'):
+            img = load_image(p['images'][0])
+            if img:
+                st.image(ImageOps.fit(img,(250,150)), caption=p.get('team',''))
+        st.write(p.get('position',''), p.get('age',''))
 
+# -------------------------
+# 검색
+search_q = st.text_input("도감 검색 (이름/팀)")
+filtered = []
+for name, p in st.session_state.players.items():
+    if search_q.lower() in name.lower() or search_q.lower() in p.get('team','').lower():
+        filtered.append((name,p))
+
+st.subheader(f"검색 결과 {len(filtered)}명")
+for name, p in filtered:
+    st.write(name, p.get('team',''), p.get('position',''), p.get('age',''))
+
+# -------------------------
+# 비교
+comp_names = st.multiselect("비교할 선수 선택 (2~4명)", options=list(st.session_state.players.keys()))
+if len(comp_names)>=2:
+    labels = ['Contact','Power','Speed','Defense','Arm','Clutch']
+    stats_list = [[st.session_state.players[n]['stats'][l] for l in labels] for n in comp_names]
+    fig = radar_chart(stats_list, labels, comp_names)
+    st.pyplot(fig)
+    df = pd.DataFrame({n:[st.session_state.players[n]['stats'][l] for l in labels] for n in comp_names}, index=labels)
+    st.bar_chart(df)
+
+# -------------------------
+# 선수 추가
+st.subheader("✍️ 선수 추가 / 편집")
+with st.form('add'):
+    aname = st.text_input("이름")
+    ateam = st.text_input("팀")
+    aage = st.number_input("나이",15,60,25)
+    apos = st.text_input("포지션")
+    aimg = st.text_input("이미지 URL")
+    submitted = st.form_submit_button("저장")
+    if submitted and aname:
+        st.session_state.players[aname] = {'team':ateam,'age':aage,'position':apos,'stats':{'Contact':50,'Power':50,'Speed':50,'Defense':50,'Arm':50,'Clutch':50},'images':[aimg]}
+        st.success(f"{aname} 저장됨")
