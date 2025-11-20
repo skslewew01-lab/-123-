@@ -25,7 +25,7 @@ players_data = [
         "team": "한화 이글스 / MLB(다저스·토론토)",
         "age": 38,
         "position": "투수",
-        "records": "MLB 사이영상 후보, 한국 야구 역사상 최고의 좌완 중 하나",
+        "records": "MLB 사이영상 후보, KBO·MLB 통산 우수 성적",
         "hobby": "요리, 강아지 산책",
         "images": [
             "https://upload.wikimedia.org/wikipedia/commons/6/60/Hyun-jin_Ryu_2019.jpg"
@@ -37,7 +37,7 @@ players_data = [
         "team": "샌디에이고 파드리스",
         "age": 30,
         "position": "유격수/내야수",
-        "records": "MLB 골드글러브급 수비, 빠른 발과 다양한 포지션 소화",
+        "records": "MLB에서 다재다능한 내야수로 활약",
         "hobby": "게임, 음악 감상",
         "images": [
             "https://upload.wikimedia.org/wikipedia/commons/5/5d/Ha-seong_Kim_2023.jpg"
@@ -45,16 +45,100 @@ players_data = [
         "bg": "https://upload.wikimedia.org/wikipedia/commons/5/5d/Ha-seong_Kim_2023.jpg"
     },
     {
+        "name": "추신수",
+        "team": "은퇴 / 역대: 텍사스, 신시내티 등(MLB)",
+        "age": 43,
+        "position": "외야수",
+        "records": "긴 MLB 경력과 높은 출루율로 한국을 대표하는 타자",
+        "hobby": "낚시, 골프",
+        "images": [
+            "https://upload.wikimedia.org/wikipedia/commons/1/12/Choo_Shin-soo_2013.jpg"
+        ],
+        "bg": "https://upload.wikimedia.org/wikipedia/commons/1/12/Choo_Shin-soo_2013.jpg"
+    },
+    {
+        "name": "이승엽",
+        "team": "은퇴 / KBO·NPB(요미우리) 경력",
+        "age": 47,
+        "position": "지명타자/1루수",
+        "records": "KBO 대표 슬러거, 다수의 홈런 기록 보유",
+        "hobby": "가족과 시간 보내기, 골프",
+        "images": [
+            "https://upload.wikimedia.org/wikipedia/commons/8/87/Lee_Seung-yeop.jpg"
+        ],
+        "bg": "https://upload.wikimedia.org/wikipedia/commons/8/87/Lee_Seung-yeop.jpg"
+    },
+    {
         "name": "양의지",
         "team": "두산 베어스",
         "age": 38,
         "position": "포수",
-        "records": "KBO 최고의 포수. 타격·수비·리드 완전체",
+        "records": "KBO 최고 수준의 포수. 다수의 골든글러브 수상",
         "hobby": "낚시, 커피 수집",
         "images": [
             "https://upload.wikimedia.org/wikipedia/commons/2/29/Yang_Eui-ji.jpg"
         ],
         "bg": "https://upload.wikimedia.org/wikipedia/commons/2/29/Yang_Eui-ji.jpg"
+    },
+    {
+        "name": "안현민",
+        "team": "KT 위즈",
+        "age": 27,
+        "position": "외야수",
+        "records": "빠른 발과 컨택 능력을 갖춘 유망 타자",
+        "hobby": "음악 감상, 운동",
+        "images": [
+            "https://example.com/ahn1.jpg"
+        ],
+        "bg": "https://example.com/ahn_bg.jpg"
+    },
+    {
+        "name": "김광현",
+        "team": "SSG 랜더스 / MLB 경력(세인트루이스 등)",
+        "age": 37,
+        "position": "투수",
+        "records": "KBO·MLB 양대 리그에서 활약한 베테랑 좌완",
+        "hobby": "낚시, 등산",
+        "images": [
+            "https://upload.wikimedia.org/wikipedia/commons/3/3f/Kim_Kwang-hyun.jpg"
+        ],
+        "bg": "https://upload.wikimedia.org/wikipedia/commons/3/3f/Kim_Kwang-hyun.jpg"
+    },
+    {
+        "name": "박병호",
+        "team": "키움 히어로즈",
+        "age": 36,
+        "position": "1루수/지명타자",
+        "records": "강력한 장타력으로 KBO 홈런왕 출신",
+        "hobby": "피트니스, 야구 분석",
+        "images": [
+            "https://upload.wikimedia.org/wikipedia/commons/6/6f/Park_Byung-ho.jpg"
+        ],
+        "bg": "https://upload.wikimedia.org/wikipedia/commons/6/6f/Park_Byung-ho.jpg"
+    },
+    {
+        "name": "최형우",
+        "team": "KIA 타이거즈",
+        "age": 41,
+        "position": "외야수",
+        "records": "KBO에서 오랜 기간 꾸준한 성적을 낸 클러치 히터",
+        "hobby": "골프, 가족과 시간 보내기",
+        "images": [
+            "https://upload.wikimedia.org/wikipedia/commons/4/4a/Choi_Hyung-woo.jpg"
+        ],
+        "bg": "https://upload.wikimedia.org/wikipedia/commons/4/4a/Choi_Hyung-woo.jpg"
+    },
+    {
+        "name": "배지환",
+        "team": "두산 베어스",
+        "age": 24,
+        "position": "내야수",
+        "records": "젊은 유망주로 주목받는 내야수",
+        "hobby": "게임, 드라이브",
+        "images": [
+            "https://example.com/bae1.jpg"
+        ],
+        "bg": "https://example.com/bae_bg.jpg"
     }
 ]
 
@@ -154,4 +238,3 @@ requests
 )
 
 st.caption("원하면 성적 그래프, 시즌별 WAR 차트, 팀별 색상 테마도 넣어줄게!")
-
